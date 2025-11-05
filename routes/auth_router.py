@@ -364,3 +364,132 @@ def patch_user(
     db.refresh(u)
     _ = u.Role, u.Employee
     return to_user_response(u)
+
+@router.get("/members")
+def list_members_by_department(
+    dept_id: int,
+    role: Optional[str] = None,
+    limit: int = 100,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    _current: AuthUser = Depends(get_current_user),  # any authenticated user
+):
+    """
+    Return members under a department with minimal fields:
+    - email, full_name, phone, dept_id
+    Optional filter: role (any role string; case/space-insensitive)
+    """
+    role_norm = normalise_role(role) if role else None
+
+    # Base join: Users -> Employee (must have employee row and the given department)
+    # (AuthUser) INNER JOIN (Employee) on user_id
+    stmt = (
+        select(
+            AuthUser.email,
+            Employee.full_name,
+            Employee.phone,
+            Employee.dept_id,
+        )
+        .join(Employee, Employee.user_id == AuthUser.user_id)
+        .where(Employee.dept_id == dept_id)
+        .order_by(Employee.full_name.asc())
+        .limit(limit)
+        .offset(offset)
+    )
+
+    # Optional role filter (Users -> Role)
+    if role_norm:
+        stmt = stmt.join(Role, Role.role_id == AuthUser.user_role_id).where(Role.role_name == role_norm)
+
+    rows = db.execute(stmt).all()
+
+    return [
+        {
+            "email": r[0],
+            "full_name": r[1],
+            "phone": r[2],
+            "dept_id": r[3],
+        }
+        for r in rows
+    ]
+
+@router.patch("/me/profile")
+def upsert_my_profile(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current: AuthUser = Depends(get_current_user),
+):
+    """
+    Create or update the current user's Employee profile.
+    - If Employee doesn't exist: requires employee_id and full_name.
+    - Otherwise partial updates are allowed.
+    Fields accepted:
+      employee_id (required on create), full_name, phone, address, fathers_name,
+      aadhar_no, date_of_birth (YYYY-MM-DD), work_position, card_id,
+      dept_id, sub_dept_id, designation_id, profile_photo
+    """
+    u = current
+    e = u.Employee
+
+    creating = e is None
+    if creating:
+        # Validate create requirements
+        employee_id = payload.get("employee_id")
+        full_name = payload.get("full_name")
+        if not employee_id or not full_name:
+            raise HTTPException(status_code=400, detail="employee_id and full_name are required to create a profile")
+
+        # Ensure unique employee_id
+        exists_empid = db.scalar(select(Employee).where(Employee.employee_id == employee_id))
+        if exists_empid:
+            raise HTTPException(status_code=409, detail="employee_id already exists")
+
+        e = Employee(
+            user_id=u.user_id,
+            employee_id=employee_id,
+            full_name=full_name,
+            phone=payload.get("phone"),
+            address=payload.get("address"),
+            fathers_name=payload.get("fathers_name"),
+            aadhar_no=payload.get("aadhar_no"),
+            date_of_birth=payload.get("date_of_birth"),
+            work_position=payload.get("work_position"),
+            card_id=payload.get("card_id"),
+            dept_id=payload.get("dept_id"),
+            sub_dept_id=payload.get("sub_dept_id"),
+            designation_id=payload.get("designation_id"),
+            profile_photo=payload.get("profile_photo"),
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        db.add(e)
+        db.commit()
+        db.refresh(u)  # refresh relationships
+        _ = u.Employee
+        return to_user_response(u)
+
+    # UPDATE (partial)
+    updatable_fields = [
+        "employee_id",         # allow changing with uniqueness check
+        "full_name", "phone", "address", "fathers_name", "aadhar_no",
+        "date_of_birth", "work_position", "card_id",
+        "dept_id", "sub_dept_id", "designation_id",
+        "profile_photo",
+    ]
+
+    # If employee_id is provided for update, ensure it's unique
+    if "employee_id" in payload and payload["employee_id"] and payload["employee_id"] != e.employee_id:
+        conflict = db.scalar(select(Employee).where(Employee.employee_id == payload["employee_id"]))
+        if conflict:
+            raise HTTPException(status_code=409, detail="employee_id already exists")
+        e.employee_id = payload["employee_id"]
+
+    for f in updatable_fields:
+        if f in payload and f != "employee_id":
+            setattr(e, f, payload[f])
+
+    e.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(u)
+    _ = u.Employee
+    return to_user_response(u)
