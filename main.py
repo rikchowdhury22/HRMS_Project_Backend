@@ -9,6 +9,8 @@ from config import settings
 from db import get_db, ping_db, SessionLocal
 from routes import api_router
 from routes import org_router
+from db import engine, Base
+from models import projects
 
 # Router presence flag (kept from your code)
 try:
@@ -59,6 +61,8 @@ def _startup():
     #     print("⚠️ Super Admin seed failed:", e)
 
     print("✅ Startup complete.\n")
+    
+    Base.metadata.create_all(bind=engine)
 
 
 @app.get("/health")

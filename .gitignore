@@ -1,4 +1,23 @@
+# Local config and environment
 .env
+*.env
+!.env.example  # optional: a safe sample env template
+
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+*.pyd
+.Python
 .venv/
+env/
+build/
+dist/
+
+# IDEs / Editors
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db
