@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from .auth_router import router as auth_router
+from .org_router import router as org_router
 from .org import router as org_router
 from .projects import router as projects_router
 from .sub_projects import router as subprojects_router
