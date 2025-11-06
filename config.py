@@ -15,6 +15,7 @@ def _to_bool(v: Optional[str], default: bool) -> bool:
 class Settings:
     PORT: int = int(os.getenv("PORT", "5000"))
 
+    DB_DRIVER: str = os.getenv("DB_DRIVER", "ODBC Driver 18 for SQL Server")
     DB_HOST: str = os.getenv("DB_HOST", "localhost")
     DB_PORT: int = int(os.getenv("DB_PORT", "1433"))
     DB_USER: str = os.getenv("DB_USER", "")
@@ -39,5 +40,6 @@ class Settings:
         if r.strip()
     ]
 
+    AUTH_DISABLED: bool = _to_bool(os.getenv("AUTH_DISABLED"), True)
 
 settings = Settings()
