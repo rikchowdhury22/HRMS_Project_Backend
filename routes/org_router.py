@@ -1,4 +1,4 @@
-# routes/org.py
+# routes/org_router.py
 from __future__ import annotations
 
 from typing import Optional, List
@@ -22,7 +22,7 @@ from utils.org_helpers import (
     delete_department_safe, delete_subdept_safe, delete_designation,
 )
 
-router = APIRouter(prefix="/org", tags=["organization"])
+router = APIRouter(prefix="/org", tags=["Organization"])
 
 
 # -----------------------------

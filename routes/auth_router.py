@@ -493,3 +493,38 @@ def upsert_my_profile(
     db.refresh(u)
     _ = u.Employee
     return to_user_response(u)
+
+@router.get("/roles")
+def list_roles(
+    q: Optional[str] = None,
+    limit: int = 100,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    _current: AuthUser = Depends(require_roles("SUPER-ADMIN", "ADMIN")),  # any authenticated user
+):
+    """
+    List roles from dbo.role_list.
+    - Optional text search by role_name/description: ?q=admin
+    - Pagination: ?limit=50&offset=0
+    """
+    stmt = select(Role).order_by(Role.role_name.asc()).limit(limit).offset(offset)
+    if q:
+        from sqlalchemy import or_ as _or
+        like = f"%{q}%"
+        stmt = (
+            select(Role)
+            .where(_or(Role.role_name.ilike(like), Role.description.ilike(like)))
+            .order_by(Role.role_name.asc())
+            .limit(limit)
+            .offset(offset)
+        )
+
+    roles = db.scalars(stmt).all()
+    return [
+        {
+            "role_id": r.role_id,
+            "role_name": r.role_name,
+            "description": r.description,
+        }
+        for r in roles
+    ]
