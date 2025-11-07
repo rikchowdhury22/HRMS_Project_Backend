@@ -327,7 +327,7 @@ def list_users(
 def get_user(
         user_id: int,
         db: Session = Depends(get_db),
-        _current: AuthUser = Depends(require_roles(*USER_GET_ENDPOINT_ALLOWED)),
+        _current: AuthUser = Depends(require_roles(*USERS_ENDPOINT_ALLOWED)),
 ):
     u = db.get(AuthUser, user_id)
     if not u:
@@ -341,7 +341,7 @@ def patch_user(
         user_id: int,
         payload: dict,
         db: Session = Depends(get_db),
-        _current: AuthUser = Depends(require_roles(*USERS_ENDPOINT_ALLOWED)),
+        _current: AuthUser = Depends(require_roles(*USER_GET_ENDPOINT_ALLOWED)),
 ):
     u = db.get(AuthUser, user_id)
     if not u:
