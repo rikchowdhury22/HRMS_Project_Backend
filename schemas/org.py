@@ -72,3 +72,45 @@ class AddAllOut(BaseModel):
     dept: DepartmentOut
     sub_dept: SubDepartmentOut
     designation: DesignationOut
+
+# -------- Dept + SubDept tree with designation counts --------
+class SubDeptNode(BaseModel):
+    sub_dept_id: int
+    sub_dept_name: str
+    desig_count: int
+
+    class Config:
+        from_attributes = True
+
+
+class DeptTreeOut(BaseModel):
+    dept_id: int
+    dept_name: str
+    desig_count_direct: int          # designations with this dept_id and sub_dept_id IS NULL
+    desig_count_total: int           # direct + all sub-dept designations
+    sub_depts: List[SubDeptNode] = []
+
+    class Config:
+        from_attributes = True
+
+# -------- Update payloads (partial allowed) --------
+class DepartmentUpdate(BaseModel):
+    dept_name: Optional[str] = Field(None, min_length=1, max_length=150)
+    description: Optional[str] = Field(None, max_length=500)
+    updated_by: Optional[int] = None
+
+
+class SubDepartmentUpdate(BaseModel):
+    # You may allow moving a sub-dept across departments by changing dept_id (optional)
+    dept_id: Optional[int] = None
+    sub_dept_name: Optional[str] = Field(None, min_length=1, max_length=150)
+    description: Optional[str] = Field(None, max_length=500)
+    updated_by: Optional[int] = None
+
+
+class DesignationUpdate(BaseModel):
+    designation_name: Optional[str] = Field(None, min_length=1, max_length=150)
+    dept_id: Optional[int] = None
+    sub_dept_id: Optional[int] = None
+    description: Optional[str] = Field(None, max_length=500)
+    updated_by: Optional[int] = None
