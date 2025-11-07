@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import datetime
 from sqlalchemy import Integer, String, DateTime, ForeignKey, Text, text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base
 
 SCHEMA = "dbo"
@@ -17,6 +17,9 @@ class SubProject(Base):
     project_id: Mapped[int] = mapped_column(
         ForeignKey(f"{SCHEMA}.projects.project_id", ondelete="CASCADE"),
         nullable=False
+    )
+
+    project = relationship("Project", back_populates="subprojects", lazy="joined"
     )
 
     assigned_by: Mapped[int] = mapped_column(
@@ -46,3 +49,11 @@ class SubProject(Base):
         server_default=text("SYSUTCDATETIME()"),
         onupdate=datetime.utcnow  # optional, only affects ORM side
     )
+
+    subproject_name: Mapped[str | None] = mapped_column(
+        String(255)
+    )  # make required later if DB is NOT NULL
+    
+    subproject_deadline: Mapped[datetime | None] = mapped_column(
+        DateTime
+    )  # or Date if you prefer

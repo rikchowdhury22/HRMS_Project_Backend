@@ -32,3 +32,10 @@ class Project(Base):
         back_populates="project",
         cascade="all, delete-orphan"
     )
+
+    subprojects = relationship(
+        "SubProject",
+        back_populates="project",
+        lazy="selectin",          # efficient, 1 extra query per collection
+        cascade="all, delete-orphan"
+    )

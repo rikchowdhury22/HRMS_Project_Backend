@@ -1,11 +1,8 @@
 from __future__ import annotations
-from datetime import datetime, timedelta, timezone
-from typing import Optional, Literal
+from datetime import datetime
+from typing import Optional, Literal, List
 from pydantic import BaseModel, Field, field_serializer
-
-# ✅ Works on all OSes — no zoneinfo dependency
-IST = timezone(timedelta(hours=5, minutes=30))
-UTC = timezone.utc
+from .sub_projects import SubProjectOut
 
 
 class ProjectCreate(BaseModel):
@@ -29,13 +26,10 @@ class ProjectOut(BaseModel):
     created_by: int
     created_on: datetime
     last_modified: datetime
-
-    # 🔥 Converts both fields to IST 12-hour format on JSON serialization
-    @field_serializer("created_on", "last_modified", when_used="json")
-    def _format_datetime(self, dt: datetime, _info):
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=UTC)
-        dt_ist = dt.astimezone(IST)
-        return dt_ist.strftime("%d-%b-%Y %I:%M:%S %p")  # e.g. 05-Nov-2025 02:45:08 PM
-
+    
+    model_config = {"from_attributes": True}
+    
+class ProjectDetailOut(ProjectOut):
+    subprojects: List[SubProjectOut] = []
+   
     model_config = {"from_attributes": True}
