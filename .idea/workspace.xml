@@ -4,11 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="437b318a-fac6-4582-a05b-cb325270f161" name="Changes" comment="Development - IX [Org &amp; Auth Done]">
+    <list default="true" id="437b318a-fac6-4582-a05b-cb325270f161" name="Changes" comment="Development - XI [Org &amp; Auth Done]">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AppynittyScrumDB.session.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crud/projects.py" beforeDir="false" afterPath="$PROJECT_DIR$/crud/projects.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/routes/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/routes/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routes/auth_router.py" beforeDir="false" afterPath="$PROJECT_DIR$/routes/auth_router.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routes/org.py" beforeDir="false" afterPath="$PROJECT_DIR$/routes/org_router.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,7 +68,7 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;vcs.Git&quot;,
     &quot;ts.external.directory.path&quot;: &quot;C:\\Program Files\\JetBrains\\WebStorm 2024.3.3\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
@@ -193,7 +194,15 @@
       <option name="project" value="LOCAL" />
       <updated>1762337965023</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="Development - X [Org &amp; Auth Done]">
+      <option name="closed" value="true" />
+      <created>1762419959410</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1762419959410</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -220,6 +229,8 @@
     <MESSAGE value="Development - VII [Login Done]" />
     <MESSAGE value="Development - VIII [Org Done]" />
     <MESSAGE value="Development - IX [Org &amp; Auth Done]" />
-    <option name="LAST_COMMIT_MESSAGE" value="Development - IX [Org &amp; Auth Done]" />
+    <MESSAGE value="Development - X [Org &amp; Auth Done]" />
+    <MESSAGE value="Development - XI [Org &amp; Auth Done]" />
+    <option name="LAST_COMMIT_MESSAGE" value="Development - XI [Org &amp; Auth Done]" />
   </component>
 </project>

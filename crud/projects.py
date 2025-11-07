@@ -1,7 +1,7 @@
 # crud/projects.py
 from sqlalchemy.orm import Session
-from models.project import Project
-from schemas.project import ProjectCreate
+from models.projects import Project
+from schemas.projects import ProjectCreate
 
 def create_project(db: Session, payload: ProjectCreate) -> Project:
     # pydantic v2 uses .model_dump(); v1 uses .dict()
