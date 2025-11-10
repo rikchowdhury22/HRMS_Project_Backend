@@ -41,5 +41,10 @@ class Settings:
     ]
 
     AUTH_DISABLED: bool = _to_bool(os.getenv("AUTH_DISABLED"), True)
+    
+    # --- MongoDB ---
+    MONGO_URI: str = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+    MONGO_DB: str = os.getenv("MONGO_DB", "scrum_mis")
 
 settings = Settings()
+
