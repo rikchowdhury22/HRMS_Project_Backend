@@ -1,8 +1,9 @@
 # schemas/projects.py
 from __future__ import annotations
 from datetime import datetime, timezone
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 from pydantic import BaseModel, Field, field_serializer
+from schemas.sub_projects import SubProjectBriefOut
 
 UTC = timezone.utc
 
@@ -27,7 +28,7 @@ class ProjectOut(BaseModel):
     last_modified: datetime
 
 class ProjectDetailOut(ProjectOut):
-    pass
+    subprojects: List[SubProjectBriefOut] = []
 
     @field_serializer("created_on", "last_modified", when_used="json")
     def _ser_dt(self, dt: datetime, _info):
