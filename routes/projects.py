@@ -1,3 +1,4 @@
+from __future__ import annotations
 from config import settings
 from datetime import datetime
 from typing import Optional, List
@@ -50,15 +51,15 @@ def list_projects(
     return db.execute(_paginate(stmt, page, page_size)).scalars().all()
 
 @router.get("/{project_id}", response_model=ProjectDetailOut)
-def get_project(project_id: int, db: Session = Depends(get_db), _u = AUTH_GUARD):
+def get_project(project_id: int, db: Session = Depends(get_db)):
     stmt = (
         select(Project)
-        .options(selectinload(Project.subprojects))
+        .options(selectinload(Project.subprojects))  # eager load children
         .where(Project.project_id == project_id)
     )
     obj = db.execute(stmt).scalar_one_or_none()
     if not obj:
-        raise HTTPException(404, "Project not found")
+        raise HTTPException(status_code=404, detail="Project not found")
     return obj
 
 @router.post("", response_model=ProjectOut, status_code=status.HTTP_201_CREATED)
