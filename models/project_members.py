@@ -34,4 +34,4 @@ class ProjectMember(Base):
         server_default=func.sysutcdatetime()  # server-side: SQL Server fills if ORM omits
     )
 
-    project = relationship("Project", back_populates="members")
+    project_members = relationship("Project", back_populates="project_members")

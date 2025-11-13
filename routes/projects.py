@@ -34,33 +34,45 @@ def _paginate(q, page: int, page_size: int):
 def list_projects(
     db: Session = Depends(get_db),
     _u = AUTH_GUARD,
-    q: Optional[str] = Query(None),
+    user_id: Optional[int] = None,
     status_filter: Optional[str] = Query(None, alias="status"),
     created_by: Optional[int] = None,
     page: int = 1,
     page_size: int = 50,
 ):
-    stmt = select(Project)
-    if q:
-        stmt = stmt.where(Project.project_name.ilike(f"%{q}%"))
+    stmt = (
+        select(Project)
+        .options(selectinload(Project.project_members))  # 🔹 load members
+    )
+
+    if user_id is not None:
+        stmt = (
+            stmt.join(ProjectMember, ProjectMember.project_id == Project.project_id)
+                .where(ProjectMember.user_id == user_id)
+        )
+
     if status_filter:
         stmt = stmt.where(Project.project_status == status_filter)
+
     if created_by is not None:
         stmt = stmt.where(Project.created_by == created_by)
+
     stmt = stmt.order_by(Project.project_id.desc())
     return db.execute(_paginate(stmt, page, page_size)).scalars().all()
 
-@router.get("/{project_id}", response_model=ProjectDetailOut)
-def get_project(project_id: int, db: Session = Depends(get_db)):
+
+@router.get("/{project_id}", response_model=ProjectOut)
+def get_project(project_id: int, db: Session = Depends(get_db), _u = AUTH_GUARD):
     stmt = (
         select(Project)
-        .options(selectinload(Project.subprojects))  # eager load children
+        .options(selectinload(Project.project_members))  # 🔹 load members
         .where(Project.project_id == project_id)
     )
     obj = db.execute(stmt).scalar_one_or_none()
     if not obj:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(404, "Project not found")
     return obj
+
 
 @router.post("", response_model=ProjectOut, status_code=status.HTTP_201_CREATED)
 def create_project(payload: ProjectCreate, db: Session = Depends(get_db), _ = WRITE_GUARD):
@@ -81,6 +93,7 @@ def create_project(payload: ProjectCreate, db: Session = Depends(get_db), _ = WR
     db.refresh(obj)
     return obj
 
+
 @router.put("/{project_id}", response_model=ProjectOut)
 def update_project(project_id: int, payload: ProjectUpdate, db: Session = Depends(get_db), _=WRITE_GUARD):
     obj = db.get(Project, project_id)
@@ -95,6 +108,7 @@ def update_project(project_id: int, payload: ProjectUpdate, db: Session = Depend
     db.refresh(obj)
     return obj
 
+
 @router.delete("/{project_id}", status_code=204)
 def delete_project(project_id: int, db: Session = Depends(get_db), _ = WRITE_GUARD):
     obj = db.get(Project, project_id)
@@ -108,10 +122,6 @@ def delete_project(project_id: int, db: Session = Depends(get_db), _ = WRITE_GUA
         raise HTTPException(409, f"Delete failed: {e}")
 
 # ----- Members -----
-@router.get("/{project_id}/members", response_model=List[ProjectMemberOut])
-def list_members(project_id: int, db: Session = Depends(get_db), _u = AUTH_GUARD):
-    stmt = select(ProjectMember).where(ProjectMember.project_id == project_id)
-    return db.execute(stmt).scalars().all()
 
 @router.post("/{project_id}/members", response_model=ProjectMemberOut, status_code=201)
 def add_member(project_id: int, payload: ProjectMemberCreate, db: Session = Depends(get_db), _ = WRITE_GUARD):
