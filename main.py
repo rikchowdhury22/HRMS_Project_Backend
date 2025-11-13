@@ -11,6 +11,7 @@ from routes import api_router
 from routes import org_router
 from routes import projects_router
 from routes import subprojects_router
+from routes import scrum_router
 from db import engine, Base
 
 # Router presence flag (kept from your code)
@@ -19,6 +20,7 @@ try:
     from routes import org_router
     from routes import projects_router
     from routes import subprojects_router
+    from routes.scrum_router import router as scrum_router
 
     ROUTERS_PRESENT = True
 except Exception:
@@ -41,6 +43,7 @@ if ROUTERS_PRESENT:
     app.include_router(org_router)
     app.include_router(projects_router)
     app.include_router(subprojects_router)
+    app.include_router(scrum_router)
 
 
 @app.on_event("startup")

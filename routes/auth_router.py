@@ -87,7 +87,9 @@ def to_user_response(u: AuthUser) -> dict:
 
 
 # ---------- Auth dependencies ----------
-def get_current_user(db: Session = Depends(get_db), authorization: str = Header(None)) -> AuthUser:
+def get_current_user(
+    db: Session = Depends(get_db), authorization: str = Header(None)
+) -> AuthUser:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Not authenticated")
     token = authorization[7:].strip()
@@ -117,7 +119,9 @@ def require_roles(*allowed: str):
 
 
 USERS_ENDPOINT_ALLOWED = [normalise_role(r) for r in settings.USERS_ENDPOINT_ALLOWED]
-USER_GET_ENDPOINT_ALLOWED = [normalise_role(r) for r in settings.USER_GET_ENDPOINT_ALLOWED]
+USER_GET_ENDPOINT_ALLOWED = [
+    normalise_role(r) for r in settings.USER_GET_ENDPOINT_ALLOWED
+]
 
 
 # ---------- Public endpoints ----------
@@ -159,7 +163,7 @@ def login(payload: dict, request: Request, db: Session = Depends(get_db)):
     if not u or not verify_password(password, u.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    if (new_hash := maybe_rehash_after_verify(password, u.password_hash)):
+    if new_hash := maybe_rehash_after_verify(password, u.password_hash):
         u.password_hash = new_hash
         db.commit()
         db.refresh(u)
@@ -199,17 +203,20 @@ def me(current: AuthUser = Depends(get_current_user)):
 
 @router.post("/refresh")
 def refresh(payload: dict | None, request: Request, db: Session = Depends(get_db)):
-    token = (payload or {}).get("refresh_token") or request.headers.get("x-refresh-token")
+    token = (payload or {}).get("refresh_token") or request.headers.get(
+        "x-refresh-token"
+    )
     if not token:
         raise HTTPException(status_code=401, detail="Missing refresh token")
 
     from hashlib import sha256 as _sha256
+
     digest = _sha256(token.encode("utf-8")).hexdigest()
 
     rt = db.scalar(
         select(RefreshToken).where(
             RefreshToken.token_hash == digest,
-            RefreshToken.revoked == false()  # or keep == False if you prefer
+            RefreshToken.revoked == false(),  # or keep == False if you prefer
         )
     )
     now = datetime.utcnow()
@@ -254,18 +261,22 @@ def refresh(payload: dict | None, request: Request, db: Session = Depends(get_db
 # ---------- Admin endpoints ----------
 @router.post("/users")
 def create_user(
-        payload: dict,
-        db: Session = Depends(get_db),
-        _current: AuthUser = Depends(require_roles(*USERS_ENDPOINT_ALLOWED)),
+    payload: dict,
+    db: Session = Depends(get_db),
+    _current: AuthUser = Depends(require_roles(*USERS_ENDPOINT_ALLOWED)),
 ):
     required = ["email", "password", "employee_id", "full_name"]
     missing = [k for k in required if not payload.get(k)]
     if missing:
-        raise HTTPException(status_code=400, detail=f"Missing fields: {', '.join(missing)}")
+        raise HTTPException(
+            status_code=400, detail=f"Missing fields: {', '.join(missing)}"
+        )
 
     if db.scalar(select(AuthUser).where(AuthUser.email == payload["email"])):
         raise HTTPException(status_code=400, detail="Email already exists")
-    if db.scalar(select(Employee).where(Employee.employee_id == payload["employee_id"])):
+    if db.scalar(
+        select(Employee).where(Employee.employee_id == payload["employee_id"])
+    ):
         raise HTTPException(status_code=400, detail="employee_id already exists")
 
     # role
@@ -305,14 +316,15 @@ def create_user(
 
 @router.get("/users")
 def list_users(
-        q: Optional[str] = None,
-        employee_id: Optional[str] = None,
-        db: Session = Depends(get_db),
-        _current: AuthUser = Depends(require_roles(*USERS_ENDPOINT_ALLOWED)),
+    q: Optional[str] = None,
+    employee_id: Optional[str] = None,
+    db: Session = Depends(get_db),
+    _current: AuthUser = Depends(require_roles(*USERS_ENDPOINT_ALLOWED)),
 ):
     stmt = select(AuthUser).order_by(AuthUser.created_at.desc())
     if q:
         from sqlalchemy import or_ as _or
+
         stmt = stmt.where(_or(AuthUser.email.ilike(f"%{q}%")))
     rows = db.scalars(stmt).all()
 
@@ -325,9 +337,9 @@ def list_users(
 
 @router.get("/users/{user_id}")
 def get_user(
-        user_id: int,
-        db: Session = Depends(get_db),
-        _current: AuthUser = Depends(require_roles(*USER_GET_ENDPOINT_ALLOWED)),
+    user_id: int,
+    db: Session = Depends(get_db),
+    _current: AuthUser = Depends(require_roles(*USERS_ENDPOINT_ALLOWED)),
 ):
     u = db.get(AuthUser, user_id)
     if not u:
@@ -338,10 +350,10 @@ def get_user(
 
 @router.patch("/users/{user_id}")
 def patch_user(
-        user_id: int,
-        payload: dict,
-        db: Session = Depends(get_db),
-        _current: AuthUser = Depends(require_roles(*USERS_ENDPOINT_ALLOWED)),
+    user_id: int,
+    payload: dict,
+    db: Session = Depends(get_db),
+    _current: AuthUser = Depends(require_roles(*USER_GET_ENDPOINT_ALLOWED)),
 ):
     u = db.get(AuthUser, user_id)
     if not u:
@@ -354,9 +366,19 @@ def patch_user(
     # update employee subset if exists
     if u.Employee:
         e = u.Employee
-        for field in ["full_name", "phone", "address", "fathers_name", "aadhar_no",
-                      "date_of_birth", "work_position", "card_id",
-                      "dept_id", "sub_dept_id", "designation_id"]:
+        for field in [
+            "full_name",
+            "phone",
+            "address",
+            "fathers_name",
+            "aadhar_no",
+            "date_of_birth",
+            "work_position",
+            "card_id",
+            "dept_id",
+            "sub_dept_id",
+            "designation_id",
+        ]:
             if field in payload:
                 setattr(e, field, payload[field])
 
@@ -364,6 +386,7 @@ def patch_user(
     db.refresh(u)
     _ = u.Role, u.Employee
     return to_user_response(u)
+
 
 @router.get("/members")
 def list_members_by_department(
@@ -376,15 +399,15 @@ def list_members_by_department(
 ):
     """
     Return members under a department with minimal fields:
-    - email, full_name, phone, dept_id
+    - user_id, email, full_name, phone, dept_id
     Optional filter: role (any role string; case/space-insensitive)
     """
     role_norm = normalise_role(role) if role else None
 
     # Base join: Users -> Employee (must have employee row and the given department)
-    # (AuthUser) INNER JOIN (Employee) on user_id
     stmt = (
         select(
+            AuthUser.user_id,
             AuthUser.email,
             Employee.full_name,
             Employee.phone,
@@ -399,19 +422,23 @@ def list_members_by_department(
 
     # Optional role filter (Users -> Role)
     if role_norm:
-        stmt = stmt.join(Role, Role.role_id == AuthUser.user_role_id).where(Role.role_name == role_norm)
+        stmt = stmt.join(Role, Role.role_id == AuthUser.user_role_id).where(
+            Role.role_name == role_norm
+        )
 
     rows = db.execute(stmt).all()
 
     return [
         {
-            "email": r[0],
-            "full_name": r[1],
-            "phone": r[2],
-            "dept_id": r[3],
+            "user_id": r[0],
+            "email": r[1],
+            "full_name": r[2],
+            "phone": r[3],
+            "dept_id": r[4],
         }
         for r in rows
     ]
+
 
 @router.patch("/me/profile")
 def upsert_my_profile(
@@ -437,10 +464,15 @@ def upsert_my_profile(
         employee_id = payload.get("employee_id")
         full_name = payload.get("full_name")
         if not employee_id or not full_name:
-            raise HTTPException(status_code=400, detail="employee_id and full_name are required to create a profile")
+            raise HTTPException(
+                status_code=400,
+                detail="employee_id and full_name are required to create a profile",
+            )
 
         # Ensure unique employee_id
-        exists_empid = db.scalar(select(Employee).where(Employee.employee_id == employee_id))
+        exists_empid = db.scalar(
+            select(Employee).where(Employee.employee_id == employee_id)
+        )
         if exists_empid:
             raise HTTPException(status_code=409, detail="employee_id already exists")
 
@@ -470,16 +502,30 @@ def upsert_my_profile(
 
     # UPDATE (partial)
     updatable_fields = [
-        "employee_id",         # allow changing with uniqueness check
-        "full_name", "phone", "address", "fathers_name", "aadhar_no",
-        "date_of_birth", "work_position", "card_id",
-        "dept_id", "sub_dept_id", "designation_id",
+        "employee_id",  # allow changing with uniqueness check
+        "full_name",
+        "phone",
+        "address",
+        "fathers_name",
+        "aadhar_no",
+        "date_of_birth",
+        "work_position",
+        "card_id",
+        "dept_id",
+        "sub_dept_id",
+        "designation_id",
         "profile_photo",
     ]
 
     # If employee_id is provided for update, ensure it's unique
-    if "employee_id" in payload and payload["employee_id"] and payload["employee_id"] != e.employee_id:
-        conflict = db.scalar(select(Employee).where(Employee.employee_id == payload["employee_id"]))
+    if (
+        "employee_id" in payload
+        and payload["employee_id"]
+        and payload["employee_id"] != e.employee_id
+    ):
+        conflict = db.scalar(
+            select(Employee).where(Employee.employee_id == payload["employee_id"])
+        )
         if conflict:
             raise HTTPException(status_code=409, detail="employee_id already exists")
         e.employee_id = payload["employee_id"]
@@ -494,13 +540,16 @@ def upsert_my_profile(
     _ = u.Employee
     return to_user_response(u)
 
+
 @router.get("/roles")
 def list_roles(
     q: Optional[str] = None,
     limit: int = 100,
     offset: int = 0,
     db: Session = Depends(get_db),
-    _current: AuthUser = Depends(require_roles("SUPER-ADMIN", "ADMIN")),  # any authenticated user
+    _current: AuthUser = Depends(
+        require_roles("SUPER-ADMIN", "ADMIN")
+    ),  # any authenticated user
 ):
     """
     List roles from dbo.role_list.
@@ -510,6 +559,7 @@ def list_roles(
     stmt = select(Role).order_by(Role.role_name.asc()).limit(limit).offset(offset)
     if q:
         from sqlalchemy import or_ as _or
+
         like = f"%{q}%"
         stmt = (
             select(Role)

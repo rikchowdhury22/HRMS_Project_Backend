@@ -1,15 +1,16 @@
+from __future__ import annotations
 from config import settings
 from datetime import datetime
 from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload, noload
 from sqlalchemy import select
 
 from db import get_db
 from models.projects import Project                      # ← keep this if your file is models/projects.py
 from models.project_members import ProjectMember
-from schemas.projects import ProjectCreate, ProjectUpdate, ProjectOut
+from schemas.projects import ProjectCreate, ProjectUpdate, ProjectOut, ProjectDetailOut
 from schemas.project_members import ProjectMemberCreate, ProjectMemberOut
 from routes.auth_router import get_current_user, require_roles
 
@@ -49,11 +50,16 @@ def list_projects(
     stmt = stmt.order_by(Project.project_id.desc())
     return db.execute(_paginate(stmt, page, page_size)).scalars().all()
 
-@router.get("/{project_id}", response_model=ProjectOut)
-def get_project(project_id: int, db: Session = Depends(get_db), _u = AUTH_GUARD):
-    obj = db.get(Project, project_id)
+@router.get("/{project_id}", response_model=ProjectDetailOut)
+def get_project(project_id: int, db: Session = Depends(get_db)):
+    stmt = (
+        select(Project)
+        .options(selectinload(Project.subprojects))  # eager load children
+        .where(Project.project_id == project_id)
+    )
+    obj = db.execute(stmt).scalar_one_or_none()
     if not obj:
-        raise HTTPException(404, "Project not found")
+        raise HTTPException(status_code=404, detail="Project not found")
     return obj
 
 @router.post("", response_model=ProjectOut, status_code=status.HTTP_201_CREATED)
