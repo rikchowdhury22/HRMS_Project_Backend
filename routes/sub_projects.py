@@ -30,14 +30,25 @@ def list_subprojects(
     _u = AUTH_GUARD,
     project_id: Optional[int] = None,
     status_filter: Optional[str] = Query(None, alias="status"),
+    user_id: Optional[int] = None,                 # 🔹 new optional filter
     page: int = 1,
     page_size: int = 50,
 ):
     stmt = select(SubProject)
-    if project_id is not None: stmt = stmt.where(SubProject.project_id == project_id)
-    if status_filter: stmt = stmt.where(SubProject.project_status == status_filter)
+
+    if project_id is not None:
+        stmt = stmt.where(SubProject.project_id == project_id)
+
+    if status_filter:
+        stmt = stmt.where(SubProject.project_status == status_filter)
+
+    # 🔹 Filter by assigned_to user, if provided
+    if user_id is not None:
+        stmt = stmt.where(SubProject.assigned_to == user_id)
+
     stmt = stmt.order_by(SubProject.subproject_id.desc())
     return db.execute(_paginate(stmt, page, page_size)).scalars().all()
+
 
 @router.get("/{subproject_id}", response_model=SubProjectOut)
 def get_subproject(subproject_id: int, db: Session = Depends(get_db), _u = AUTH_GUARD):
@@ -45,6 +56,7 @@ def get_subproject(subproject_id: int, db: Session = Depends(get_db), _u = AUTH_
     if not obj:
         raise HTTPException(404, "Sub-project not found")
     return obj
+
 
 @router.post("", response_model=SubProjectOut, status_code=201)
 def create_subproject(payload: SubProjectCreate, db: Session = Depends(get_db), _ = WRITE_GUARD):
