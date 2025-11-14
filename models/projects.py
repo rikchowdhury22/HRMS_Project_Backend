@@ -7,7 +7,7 @@ class Project(Base):
     __tablename__ = "projects"
     __table_args__ = {
         "schema": "dbo",
-        "implicit_returning": False,   # ✅ place it here, not in __mapper_args__
+        "implicit_returning": False,
     }
 
     project_id     = Column(Integer, primary_key=True, autoincrement=True)
@@ -27,15 +27,16 @@ class Project(Base):
         onupdate=func.sysutcdatetime()
     )
 
-    members = relationship(
+    # 🔹 renamed relationship
+    project_members = relationship(
         "ProjectMember",
-        back_populates="project",
-        cascade="all, delete-orphan"
+        back_populates="project_members",
+        cascade="all, delete-orphan",
     )
 
     subprojects = relationship(
         "SubProject",
         back_populates="project",
-        lazy="selectin",          # efficient, 1 extra query per collection
-        cascade="all, delete-orphan"
+        lazy="selectin",
+        cascade="all, delete-orphan",
     )
