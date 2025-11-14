@@ -61,13 +61,17 @@ def list_projects(
     return db.execute(_paginate(stmt, page, page_size)).scalars().all()
 
 
-@router.get("/{project_id}", response_model=ProjectOut)
+@router.get("/{project_id}", response_model=ProjectDetailOut)
 def get_project(project_id: int, db: Session = Depends(get_db), _u = AUTH_GUARD):
     stmt = (
         select(Project)
-        .options(selectinload(Project.project_members))  # 🔹 load members
+        .options(
+            selectinload(Project.project_members),  # members
+            selectinload(Project.subprojects),      # 🔹 subprojects
+        )
         .where(Project.project_id == project_id)
     )
+
     obj = db.execute(stmt).scalar_one_or_none()
     if not obj:
         raise HTTPException(404, "Project not found")
