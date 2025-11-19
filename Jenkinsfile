@@ -45,7 +45,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(
-                        credentialsId: 'PMS-Backend_Docke',   // check this ID matches in Jenkins
+                        credentialsId: 'PMS-Backend_Docker',   // check this ID matches in Jenkins
                         usernameVariable: 'DOCKERHUB_USER',
                         passwordVariable: 'DOCKERHUB_PASS'
                     )]) {
